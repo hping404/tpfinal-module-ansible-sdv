@@ -1,0 +1,131 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Update
+  ansible.builtin.package:
+    update_cache: yes
+
+- name: Installation des dépendences Debian
+  ansible.builtin.apt:
+    name: "{{ item }}"
+  loop: "{{ packages-u }}"
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Installation des dépendences RedHat
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+  loop: "{{ packages-r }}"
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Suppression page index.html
+  ansible.builtin.file:
+    path: /var/www/html/index.html
+    state: absent
+
+- name: Demarrer le service
+  ansible.builtin.service:
+    name: apache2
+    state: restarted
+
+- name: Demarrer en arriere-plan mariadb
+  ansible.builtin.command: mysqld_safe --datadir=/var/lib/mysql &
+
+- name: Faire dodo un peu en attendant le demarrage de mariadb
+  ansible.builtin.command: sleep 10
+
+- name: Afficher le message
+  ansible.builtin.debug:
+    msg: "Sécurisation de MariaDB..."
+
+- name: Securisation de MariaDB
+  ansible.builtin.shell: mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'examplerootPW';"
+
+- name: Securisation de MariaDB
+  ansible.builtin.shell: mysql -uroot -pexamplerootPW -e "DELETE FROM mysql.user WHERE User='';"
+
+- name: Securisation de MariaDB
+  ansible.builtin.shell: mysql -uroot -pexamplerootPW -e "DROP DATABASE IF EXISTS test;"
+
+- name: Securisation de MariaDB
+  ansible.builtin.shell: mysql -uroot -pexamplerootPW -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';" 
+
+- name: Securisation de MariaDB
+  ansible.builtin.shell: mysql -uroot -pexamplerootPW -e "FLUSH PRIVILEGES;"
+
+- name: Afficher le message
+  ansible.builtin.debug:
+    msg: "Création de la base de données WordPress..."
+
+- name: Creation de la bdd
+  ansible.builtin.shell: mysql -uroot -pexamplerootPW -e "CREATE DATABASE wordpress;"
+
+- name: Creation de la bdd
+  ansible.builtin.shell: mysql -uroot -pexamplerootPW -e "CREATE USER 'example'@'localhost' IDENTIFIED BY 'examplePW';" 
+
+- name: Creation de la bdd
+  ansible.builtin.shell: mysql -uroot -pexamplerootPW -e "GRANT ALL PRIVILEGES ON wordpress.* TO 'example'@'localhost';" 
+
+- name: Creation de la bdd
+  ansible.builtin.shell: mysql -uroot -pexamplerootPW -e "FLUSH PRIVILEGES;"
+
+- name: Telechargement de wordpress
+  ansible.builtin.get_url:
+    url: https://wordpress.org/latest.zip 
+    path: /tmp
+
+- name: Copier wordpress
+  ansible.builtin.copy:
+    src: /tmp/wordpress/*
+    dest: /var/www/html
+  owner: "{{ owner }}"
+  mode: '755'
+
+- name: Copy config
+  ansible.builtin.copy:
+    src: /var/www/html/wp-config-sample.php
+    dest: /var/www/html/wp-config.php
+    owner: "{{ owner }}"
+    mode: '640'
+
+- name: Creation fichier config.php
+  ansible.builtin.command: sed -i "s/database_name_here/wordpress/" wp-config.php
+
+- name: Creation fichier config.php
+  ansible.builtin.command: sed -i "s/username_here/example/" wp-config.php 
+
+- name: Creation fichier config.php
+  ansible.builtin.command: sed -i "s/password_here/examplePW/" wp-config.php
+
+- name: Creation fichier config.php
+  ansible.builtin.command: sed -i "s/localhost/localhost/" wp-config.php 
+
+- name: Content
+  ansible.builtin.shell: echo "|
+    <VirtualHost *:80> 
+      ServerAdmin admin@localhost 
+      DocumentRoot /var/www/html/wordpress 
+      <Directory /var/www/html/wordpress> 
+          AllowOverride All 
+      </Directory> 
+      ErrorLog \${APACHE_LOG_DIR}/error.log 
+      CustomLog \${APACHE_LOG_DIR}/access.log combined 
+    </VirtualHost> 
+    EOF 
+    "
+
+- name: Wordpress.conf
+  ansible.builtin.shell: a2ensite wordpress.conf
+
+- name: Rewrite
+  ansible.builtin.shell: a2ensite rewrite
+
+- name: reload
+  ansible.builtin.service:
+    name: apache2
+    state: reload
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: reload
+  ansible.builtin.service:
+    name: httpd
+    state: reload
+  when: ansible_facts['os_family'] == "RedHat"

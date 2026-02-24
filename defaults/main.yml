@@ -1,0 +1,21 @@
+#SPDX-License-Identifier: MIT-0
+---
+packages-d:
+  - apache2
+  - php
+  - libapache2-mod-php
+  - php-mysql
+  - mariadb-server
+  - wget
+  - unzip
+
+packages-r:
+  - httpd
+  - php
+  # - libapache2-mod-php    PAS LES MEMES PAQUETS POUR REDHAT
+  - php-mysqlnd
+  - mariadb-server
+  - wget
+  - unzip
+
+owner: www-data
