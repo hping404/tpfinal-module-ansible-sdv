@@ -26,7 +26,13 @@
     name: apache2
     state: restarted
   when: ansible_facts['os_family'] == "Debian"
-  
+
+- name: Demarrer
+  ansible.builtin.service:
+    name: httpd
+    state: restarted
+  when: ansible_facts['os_family'] == "RedHat"
+
 - name: Demarrer en arriere-plan mariadb
   ansible.builtin.shell: mysqld_safe --datadir=/var/lib/mysql &
 
