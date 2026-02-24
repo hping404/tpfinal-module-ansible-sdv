@@ -27,7 +27,7 @@
     state: restarted
 
 - name: Demarrer en arriere-plan mariadb
-  ansible.builtin.command: mysqld_safe --datadir=/var/lib/mysql &
+  ansible.builtin.shell: mysqld_safe --datadir=/var/lib/mysql &
 
 - name: Faire dodo un peu en attendant le demarrage de mariadb
   ansible.builtin.command: sleep 10
