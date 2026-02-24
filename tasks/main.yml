@@ -7,7 +7,7 @@
 - name: Installation des dépendences Debian
   ansible.builtin.apt:
     name: "{{ item }}"
-  loop: "{{ packages-u }}"
+  loop: "{{ packages-d }}"
   when: ansible_facts['os_family'] == "Debian"
 
 - name: Installation des dépendences RedHat
