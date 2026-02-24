@@ -118,7 +118,7 @@
 - name: Rewrite
   ansible.builtin.shell: a2ensite rewrite
 
-- name: reload
+- name: Reload
   ansible.builtin.service:
     name: apache2
     state: reload
