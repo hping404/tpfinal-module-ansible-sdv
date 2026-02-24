@@ -70,7 +70,7 @@
 - name: Telechargement de wordpress
   ansible.builtin.get_url:
     url: https://wordpress.org/latest.zip 
-    path: /tmp
+    dest: /tmp
 
 - name: Copier wordpress
   ansible.builtin.copy:
